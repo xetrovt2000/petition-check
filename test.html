@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Petition: Änderungen abhaken</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --text: #1d1d1b; --muted: #6b6a66; --line: #e3e1da;
+    --old: #fbeaea; --old-line: #e4b4b4; --new: #e8f4ea; --new-line: #a9d2b0;
+    --yes: #1f7a3a; --no: #b3261e; --ask: #8a6d00; --accent: #25d366;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --card: #1f1f1d; --text: #ecebe6; --muted: #a3a29c; --line: #34332f;
+      --old: #3a2222; --old-line: #6e3a3a; --new: #1f3324; --new-line: #3d6b47;
+      --yes: #4cc46e; --no: #ff7a70; --ask: #e0bb3a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 20px 16px 120px; }
+  h1 { font-size: 1.45rem; line-height: 1.25; margin: 4px 0 8px; }
+  .intro { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px; margin: 0 0 16px; }
+  .card h2 { font-size: 1.1rem; margin: 0 0 8px; display: flex; gap: 10px; align-items: baseline; }
+  .num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--text); color: var(--bg);
+    font-size: .9rem; display: inline-flex; align-items: center; justify-content: center; }
+  .why { margin: 0 0 10px; }
+  .box { border-radius: 10px; padding: 10px 12px; margin: 8px 0; font-size: .95rem; }
+  .box b { display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+  .old { background: var(--old); border: 1px solid var(--old-line); }
+  .new { background: var(--new); border: 1px solid var(--new-line); }
+  ul { margin: 6px 0; padding-left: 20px; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .btns button { font: inherit; font-weight: 600; padding: 12px 6px; border-radius: 10px;
+    border: 2px solid var(--line); background: transparent; color: var(--text); cursor: pointer; }
+  .btns button[data-v="ja"].on { background: var(--yes); border-color: var(--yes); color: #fff; }
+  .btns button[data-v="nein"].on { background: var(--no); border-color: var(--no); color: #fff; }
+  .btns button[data-v="frage"].on { background: var(--ask); border-color: var(--ask); color: #fff; }
+  textarea { width: 100%; margin-top: 10px; font: inherit; font-size: .95rem; padding: 10px;
+    border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    min-height: 44px; resize: vertical; }
+  .info { color: var(--muted); font-size: .95rem; }
+  .summary { border: 2px solid var(--text); }
+  .summary ol { margin: 0 0 8px; padding-left: 24px; }
+  .summary li { margin: 4px 0; }
+  .summary .v-ja { color: var(--yes); font-weight: 700; }
+  .summary .v-nein { color: var(--no); font-weight: 700; }
+  .summary .v-frage { color: var(--ask); font-weight: 700; }
+  .summary .v-offen { color: var(--muted); }
+  .summary .note { display: block; color: var(--muted); font-size: .9rem; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .bar-inner { max-width: 640px; margin: 0 auto; display: flex; gap: 12px; align-items: center; }
+  .count { font-size: .9rem; color: var(--muted); flex: 1; }
+  .send { font: inherit; font-weight: 700; border: 0; border-radius: 12px; padding: 14px 18px;
+    background: var(--accent); color: #0b3d1e; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kuba-Petition: Änderungen abhaken</h1>
+  <p class="intro">Hallo Papa! Hier sind meine Vorschläge für deine Petition. Tippe bei jedem Punkt auf
+    <b>Ja</b>, <b>Nein</b> oder <b>Frage</b>. Deine Antworten kommen automatisch bei mir an,
+    du musst nichts abschicken.</p>
+
+  <div class="card summary" id="summary" hidden>
+    <h2>Deine Antworten</h2>
+    <ol id="sumlist"></ol>
+    <p class="info" id="ok" hidden>✓ Ist bei Raphael angekommen.</p>
+  </div>
+
+  <div id="items"></div>
+
+  <div class="card info">
+    <b>Gut zu wissen:</b> Unterschriften auf openPetition zählen nicht für eine öffentliche Beratung im
+    Bundestag (dafür bräuchte man 30.000 über die Bundestagsseite). Der Petitionsausschuss muss die
+    Petition aber trotzdem bearbeiten. 500 Unterschriften sind ein realistisches Ziel.
+  </div>
+</main>
+
+<div class="bar"><div class="bar-inner">
+  <span class="count" id="count">0 von 10 beantwortet</span>
+  <button class="send" id="send">An Raphael senden</button>
+</div></div>
+
+<script>
+const ITEMS = [
+  { t: "Neuer Titel",
+    why: "Der jetzige Titel ist schwer verständlich. Man sieht nicht, wer was tun soll. Der Titel entscheidet, ob jemand weiterliest.",
+    old: "Beendet 64 Jahre(Lebenslänglich!) Kuba Sanktion über EU",
+    neu: "Ölblockade gegen Kuba: Bundesregierung und EU müssen handeln" },
+  { t: "Aktuelle Fakten von 2026 einbauen",
+    why: "Der Text klingt allgemein, dabei gibt es konkrete, belegbare Ereignisse:",
+    list: ["29.01.2026: US-Erlass, seitdem faktische Ölblockade",
+           "01.05.2026: neuer US-Erlass, damit können auch europäische Firmen bestraft werden",
+           "Mai 2026: Kuba hat kein Heizöl und keinen Diesel mehr",
+           "Sept./Okt. 2026: Die US-Küstenwache fängt Frachter nach Kuba ab"],
+    old: "… falls sie Kuba mit Erdöl – unter anderem aus Ländern wie Venezuela – … versorgen.",
+    neu: "Venezuela streichen (seit Maduros Absetzung kommt von dort nichts mehr) und die Ereignisse oben mit Datum einbauen." },
+  { t: "IGH-Urteil von 1986 vorsichtiger formulieren",
+    why: "Laut Urteil war das Verminen der Häfen klar völkerrechtswidrig. Das Handelsembargo selbst hat das Gericht aber wohl nicht als allgemeinen Völkerrechtsbruch gewertet. Gegner würden genau diesen Punkt angreifen.",
+    old: "… hat bereits unmissverständlich klargestellt, dass die wirtschaftliche Blockierung von Häfen und Handelswegen dritter Staaten eine völkerrechtswidrige Intervention darstellt.",
+    neu: "Der Internationale Gerichtshof hat 1986 die Behinderung von Häfen und Seewegen eines anderen Staates verurteilt." },
+  { t: "Seerecht richtig begründen",
+    why: "Die USA haben das UN-Seerechtsabkommen nie unterschrieben. Das Argument ist so angreifbar.",
+    old: "… die den Grundsätzen des UN-Seerechtsübereinkommens (UNCLOS) widerspricht.",
+    neu: "… die gegen die völkerrechtlich anerkannte Freiheit der Meere verstößt." },
+  { t: "Forderung 1 konkreter machen",
+    why: "Das EU-Schutzgesetz gegen US-Sanktionen (Blocking Statute) gilt nur für US-Gesetze, die in seinem Anhang stehen. Die neuen Erlasse von 2026 stehen dort nicht, „strikt durchsetzen“ bringt also nichts.",
+    old: "Die strikte Durchsetzung der EU-Antiboykott-Verordnung (Blocking Statute) …",
+    neu: "Die Aufnahme der US-Erlasse 14380 und 14404 in den Anhang der EU-Abwehrverordnung (EG) Nr. 2271/96, damit europäische Reedereien, Versicherungen und Banken geschützt sind." },
+  { t: "Neue Forderung: humanitäre Hilfe",
+    why: "Die Bundesregierung hat nach Angaben eines Abgeordneten seit der Verschärfung keine Hilfe für Kuba geleistet. Spanien hilft schon. Dem können auch Leute zustimmen, die die kubanische Regierung kritisch sehen.",
+    neu: "Neue Forderung 4: Deutschland leistet humanitäre Hilfe für Kuba über die UN und die EU." },
+  { t: "Forderung 3 (Zahlungswege ohne Dollar) ergänzen",
+    why: "So etwas gab es schon für den Iran (INSTEX), das ist gescheitert und wurde 2023 aufgelöst. Ohne Erklärung wird die Forderung leicht abgetan.",
+    neu: "Einen Satz ergänzen: Was bei INSTEX schiefging und warum ein neuer Kanal (z. B. nur für Medizin, Lebensmittel und Treibstoff) diesmal funktionieren kann." },
+  { t: "Ton etwas entschärfen",
+    why: "Starke Worte schrecken Unentschlossene ab. Außerdem stimmt Deutschland in der UN jedes Jahr gegen das Embargo (2025: 165 zu 7 Stimmen). Die Abstimmung als nutzlos hinzustellen, verprellt mögliche Verbündete.",
+    old: "„Kinderrassel“, „schreiendes Unrecht“, „Lebenslänglich!“",
+    neu: "Sachlich formulieren, z. B.: „Die jährlichen UN-Beschlüsse sind ein wichtiges Signal, haben aber bisher nichts geändert. Jetzt braucht es konkrete Schritte.“" },
+  { t: "Gegenargument vorwegnehmen",
+    why: "Viele denken zuerst an die kubanische Regierung. Wenn wir das selbst ansprechen, nehmen wir Kritikern den Wind aus den Segeln.",
+    neu: "„Unabhängig davon, wie man die kubanische Regierung bewertet: Die Bevölkerung von Strom, Wasser und Krankenhäusern abzuschneiden, ist falsch.“" },
+  { t: "Technik auf openPetition",
+    why: "Kleinigkeiten, die mehr Unterschriften bringen:",
+    list: ["Begründung ins eigene Feld „Begründung“ verschieben (dort steht nur „S.o.“)",
+           "Region auf „Deutschland“ statt „Kuba, USA“, weil sie an den Bundestag geht",
+           "Eigenes Bild statt Standardgrafik (z. B. dunkles Havanna beim Stromausfall)",
+           "Quellenlinks in den Text",
+           "Tippfehler „Handelsbembargo“ korrigieren"] },
+];
+
+const KEY = "petition-check-v1";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const wrap = document.getElementById("items");
+ITEMS.forEach((it, i) => {
+  const n = i + 1, s = state[n] || {};
+  const el = document.createElement("section");
+  el.className = "card";
+  el.innerHTML = `
+    <h2><span class="num">${n}</span><span>${esc(it.t)}</span></h2>
+    <p class="why">${esc(it.why)}</p>
+    ${it.list ? `<ul>${it.list.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    ${it.old ? `<div class="box old"><b>Bisher</b>${esc(it.old)}</div>` : ""}
+    ${it.neu ? `<div class="box new"><b>Vorschlag</b>${esc(it.neu)}</div>` : ""}
+    <div class="btns">
+      <button data-v="ja">Ja</button><button data-v="nein">Nein</button><button data-v="frage">Frage</button>
+    </div>
+    <textarea placeholder="Anmerkung (optional)">${esc(s.note || "")}</textarea>`;
+  const btns = el.querySelectorAll("button");
+  const paint = () => btns.forEach(b => b.classList.toggle("on", b.dataset.v === (state[n] || {}).v));
+  btns.forEach(b => b.addEventListener("click", () => {
+    state[n] = { ...(state[n] || {}), v: (state[n] || {}).v === b.dataset.v ? undefined : b.dataset.v };
+    paint(); save(); count();
+  }));
+  el.querySelector("textarea").addEventListener("input", e => {
+    state[n] = { ...(state[n] || {}), note: e.target.value }; save(); sync(3000);
+  });
+  paint();
+  wrap.appendChild(el);
+});
+
+// Antworten automatisch an Raphael übertragen (ntfy.sh, kein Login nötig)
+const TOPIC = "https://ntfy.sh/petition-gerd-c5648ea1f4044b099f7164e6";
+let syncTimer, lastSent = "";
+function summaryText() {
+  const label = { ja: "JA", nein: "NEIN", frage: "FRAGE" };
+  return ITEMS.map((it, i) => {
+    const s = state[i + 1] || {};
+    let l = `${i + 1}. ${it.t}: ${label[s.v] || "offen"}`;
+    if (s.note && s.note.trim()) l += `\n   → ${s.note.trim()}`;
+    return l;
+  }).join("\n");
+}
+function sync(delay) {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (!Object.keys(state).length) return;
+    const text = summaryText();
+    if (text === lastSent) return;
+    fetch(TOPIC, { method: "POST", body: text, headers: { Title: "Antwort Kuba-Petition" } })
+      .then(r => { if (r.ok) { lastSent = text; document.getElementById("ok").hidden = false; } })
+      .catch(() => {});
+  }, delay);
+}
+
+function count() {
+  const done = ITEMS.filter((_, i) => (state[i + 1] || {}).v).length;
+  document.getElementById("count").textContent = `${done} von ${ITEMS.length} beantwortet`;
+  const label = { ja: "Ja", nein: "Nein", frage: "Frage" };
+  document.getElementById("summary").hidden = done === 0;
+  document.getElementById("sumlist").innerHTML = ITEMS.map((it, i) => {
+    const s = state[i + 1] || {}, v = s.v || "offen";
+    const note = s.note && s.note.trim() ? `<span class="note">→ ${esc(s.note.trim())}</span>` : "";
+    return `<li>${esc(it.t)}: <span class="v-${v}">${label[v] || "offen"}</span>${note}</li>`;
+  }).join("");
+  sync(1500);
+  return done;
+}
+count();
+sync(0);
+
+document.getElementById("send").addEventListener("click", () => {
+  if (count() < ITEMS.length &&
+      !confirm("Noch nicht alle Punkte beantwortet. Trotzdem senden?")) return;
+  const label = { ja: "JA", nein: "NEIN", frage: "FRAGE" };
+  const lines = ITEMS.map((it, i) => {
+    const s = state[i + 1] || {};
+    let l = `${i + 1}. ${it.t}: ${label[s.v] || "offen"}`;
+    if (s.note && s.note.trim()) l += `\n   → ${s.note.trim()}`;
+    return l;
+  });
+  const text = "Antwort zur Kuba-Petition:\n\n" + lines.join("\n");
+  // Nummer steht nur im Link (#49...), nicht im öffentlichen Repo
+  const nr = location.hash.replace(/\D/g, "");
+  location.href = "https://wa.me/" + nr + "?text=" + encodeURIComponent(text);
+});
+</script>
+</body>
+</html>
