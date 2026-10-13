@@ -65,14 +65,13 @@
 <main>
   <h1>Kuba-Petition: Änderungen abhaken</h1>
   <p class="intro">Hallo Papa! Hier sind meine Vorschläge für deine Petition. Tippe bei jedem Punkt auf
-    <b>Ja</b>, <b>Nein</b> oder <b>Frage</b>. Wenn du willst, schreib etwas dazu. Am Ende unten auf
-    <b>„An Raphael senden“</b> tippen, dann geht deine Antwort per WhatsApp an mich. Was du absegnest,
-    ändere ich, und du bekommst den fertigen Text vorher noch mal zum Lesen.</p>
+    <b>Ja</b>, <b>Nein</b> oder <b>Frage</b>. Deine Antworten kommen automatisch bei mir an,
+    du musst nichts abschicken.</p>
 
   <div class="card summary" id="summary" hidden>
     <h2>Deine Antworten</h2>
     <ol id="sumlist"></ol>
-    <p class="info">Mach einfach einen Screenshot von diesem Kasten und schick ihn mir per WhatsApp.</p>
+    <p class="info" id="ok" hidden>✓ Ist bei Raphael angekommen.</p>
   </div>
 
   <div id="items"></div>
@@ -86,7 +85,6 @@
 
 <div class="bar"><div class="bar-inner">
   <span class="count" id="count">0 von 10 beantwortet</span>
-  <button class="send" id="send">An Raphael senden</button>
 </div></div>
 
 <script>
@@ -165,11 +163,35 @@ ITEMS.forEach((it, i) => {
     paint(); save(); count();
   }));
   el.querySelector("textarea").addEventListener("input", e => {
-    state[n] = { ...(state[n] || {}), note: e.target.value }; save();
+    state[n] = { ...(state[n] || {}), note: e.target.value }; save(); sync(3000);
   });
   paint();
   wrap.appendChild(el);
 });
+
+// Antworten automatisch an Raphael übertragen (ntfy.sh, kein Login nötig)
+const TOPIC = "https://ntfy.sh/petition-gerd-c5648ea1f4044b099f7164e6";
+let syncTimer, lastSent = "";
+function summaryText() {
+  const label = { ja: "JA", nein: "NEIN", frage: "FRAGE" };
+  return ITEMS.map((it, i) => {
+    const s = state[i + 1] || {};
+    let l = `${i + 1}. ${it.t}: ${label[s.v] || "offen"}`;
+    if (s.note && s.note.trim()) l += `\n   → ${s.note.trim()}`;
+    return l;
+  }).join("\n");
+}
+function sync(delay) {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (!Object.keys(state).length) return;
+    const text = summaryText();
+    if (text === lastSent) return;
+    fetch(TOPIC, { method: "POST", body: text, headers: { Title: "Antwort Kuba-Petition" } })
+      .then(r => { if (r.ok) { lastSent = text; document.getElementById("ok").hidden = false; } })
+      .catch(() => {});
+  }, delay);
+}
 
 function count() {
   const done = ITEMS.filter((_, i) => (state[i + 1] || {}).v).length;
@@ -181,25 +203,11 @@ function count() {
     const note = s.note && s.note.trim() ? `<span class="note">→ ${esc(s.note.trim())}</span>` : "";
     return `<li>${esc(it.t)}: <span class="v-${v}">${label[v] || "offen"}</span>${note}</li>`;
   }).join("");
+  sync(1500);
   return done;
 }
 count();
-
-document.getElementById("send").addEventListener("click", () => {
-  if (count() < ITEMS.length &&
-      !confirm("Noch nicht alle Punkte beantwortet. Trotzdem senden?")) return;
-  const label = { ja: "JA", nein: "NEIN", frage: "FRAGE" };
-  const lines = ITEMS.map((it, i) => {
-    const s = state[i + 1] || {};
-    let l = `${i + 1}. ${it.t}: ${label[s.v] || "offen"}`;
-    if (s.note && s.note.trim()) l += `\n   → ${s.note.trim()}`;
-    return l;
-  });
-  const text = "Antwort zur Kuba-Petition:\n\n" + lines.join("\n");
-  // Nummer steht nur im Link (#49...), nicht im öffentlichen Repo
-  const nr = location.hash.replace(/\D/g, "");
-  location.href = "https://wa.me/" + nr + "?text=" + encodeURIComponent(text);
-});
+sync(0);
 </script>
 </body>
 </html>
