@@ -45,6 +45,14 @@
     border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
     min-height: 44px; resize: vertical; }
   .info { color: var(--muted); font-size: .95rem; }
+  .summary { border: 2px solid var(--text); }
+  .summary ol { margin: 0 0 8px; padding-left: 24px; }
+  .summary li { margin: 4px 0; }
+  .summary .v-ja { color: var(--yes); font-weight: 700; }
+  .summary .v-nein { color: var(--no); font-weight: 700; }
+  .summary .v-frage { color: var(--ask); font-weight: 700; }
+  .summary .v-offen { color: var(--muted); }
+  .summary .note { display: block; color: var(--muted); font-size: .9rem; }
   .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
   .bar-inner { max-width: 640px; margin: 0 auto; display: flex; gap: 12px; align-items: center; }
@@ -60,6 +68,12 @@
     <b>Ja</b>, <b>Nein</b> oder <b>Frage</b>. Wenn du willst, schreib etwas dazu. Am Ende unten auf
     <b>„An Raphael senden“</b> tippen, dann geht deine Antwort per WhatsApp an mich. Was du absegnest,
     ändere ich, und du bekommst den fertigen Text vorher noch mal zum Lesen.</p>
+
+  <div class="card summary" id="summary" hidden>
+    <h2>Deine Antworten</h2>
+    <ol id="sumlist"></ol>
+    <p class="info">Mach einfach einen Screenshot von diesem Kasten und schick ihn mir per WhatsApp.</p>
+  </div>
 
   <div id="items"></div>
 
@@ -160,6 +174,13 @@ ITEMS.forEach((it, i) => {
 function count() {
   const done = ITEMS.filter((_, i) => (state[i + 1] || {}).v).length;
   document.getElementById("count").textContent = `${done} von ${ITEMS.length} beantwortet`;
+  const label = { ja: "Ja", nein: "Nein", frage: "Frage" };
+  document.getElementById("summary").hidden = done === 0;
+  document.getElementById("sumlist").innerHTML = ITEMS.map((it, i) => {
+    const s = state[i + 1] || {}, v = s.v || "offen";
+    const note = s.note && s.note.trim() ? `<span class="note">→ ${esc(s.note.trim())}</span>` : "";
+    return `<li>${esc(it.t)}: <span class="v-${v}">${label[v] || "offen"}</span>${note}</li>`;
+  }).join("");
   return done;
 }
 count();
@@ -175,7 +196,9 @@ document.getElementById("send").addEventListener("click", () => {
     return l;
   });
   const text = "Antwort zur Kuba-Petition:\n\n" + lines.join("\n");
-  location.href = "https://wa.me/?text=" + encodeURIComponent(text);
+  // Nummer steht nur im Link (#49...), nicht im öffentlichen Repo
+  const nr = location.hash.replace(/\D/g, "");
+  location.href = "https://wa.me/" + nr + "?text=" + encodeURIComponent(text);
 });
 </script>
 </body>
